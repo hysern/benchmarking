@@ -1,6 +1,8 @@
 Protocol Benchmarking
 ============
 
+I disabled the Google Docs reporting as it requires OAuth and no longer supports id/pwd 
+
 These scripts provide an easy way to benchmark different protocols, over different network conditions, while reporting the results to a folder in Google Drive.
 
 The current focus in these scripts is to compare Google's QUIC (http://en.wikipedia.org/wiki/QUIC) with regular HTTP and HTTPS.
@@ -12,27 +14,34 @@ You'll need two Linux machines for these tests, and the Google QUIC demo client 
 
 Compiling the QUIC Demo Client and Server
 =============
-Excellent instructions are available here: https://code.google.com/p/chromium/wiki/LinuxBuildInstructions
+Excellent instructions are available here: https://www.chromium.org/quic and 
+https://github.com/google/proto-quic 
 
-If the client will need to reach the server on IPv4, the quic_server source must be patched to listen for IPv4 requests.  The patch for this is available in the patches directory.  From within the chromium src directory, run this:
-```
-patch -p1 < path/to/benchmarking/quic-patches/001-quic-server-ipv4.patch
-```
-
-Once you have the code, compile the QUIC demo client and server with
-```
-ninja -C out/Debug quic_client quic_server
-```
 
 Setting up the Server
 =============
+
+Generate the certs using generate-certs.sh from the certs folder. This generates certs for www.example.org 
+Install the cert in both client and server machine using
+
+```
+certutil -d sql:/home/osboxes/.pki/nssdb -A -t "C,," -n test -i 2048-sha256-root.pem
+
+certutil -d sql:/home/osboxes/.pki/nssdb -A -t "P,," -n test -i 2048-sha256-root.pem
+```
+
 It is assumed that the server will run nginx on port 80 (and 443, if you care to test HTTPS).  Any web server will do, but the file scripts/mk-quic-data.sh will generate some random files, and will download files referenced in the benchmarking in the Chromium source, and currently places them where nginx ought to be looking for them by default.
 
-The domain name _quic-server_ is used by the tests, so you will want to add an entry for quic-server, with the server's address, to /etc/hosts on both the client and server.
+Add www.example.org and example.org to point to the server in /etc/hosts 
 
-Once the files are available on the server, scripts/run-quic-server.sh will run the QUIC server.
-
-
+Start the quic server like so,
+```
+./quic_server --certificate_file=/home/osboxes/Desktop/certs/out/leaf_cert.pem --key_file=/home/osboxes/Desktop/certs/out/leaf_cert.pkcs8 --quic_response_cache_dir=/tmp/quic-data
+```
+You can check everything works: 
+```
+./quic_client --host='server' --port=6121 https://www.example.org/test/file-10M.dat
+```
 Running the tests
 ==============
 A few system environment variables are used by the test.
