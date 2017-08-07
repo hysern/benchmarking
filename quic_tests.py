@@ -135,7 +135,7 @@ class Test(unittest.TestCase):
     def test_QUIC_vs_HTTP(self):
         self.test_10MBIncreasingLatency()
         self.test_10MBIncreasingLoss()
-        self.test_10MBIncreasignSpeed()
+        self.test_10MBIncreasingSpeed()
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
